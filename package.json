@@ -4,6 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
+    "run": "./app.js",
     "test": "test"
   },
   "repository": {
