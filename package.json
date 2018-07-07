@@ -1,0 +1,19 @@
+{
+  "name": "starter_app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amitlzkpa/starter_app.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/amitlzkpa/starter_app/issues"
+  },
+  "homepage": "https://github.com/amitlzkpa/starter_app#readme"
+}
