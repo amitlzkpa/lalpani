@@ -7,7 +7,33 @@ const GeolocationParams = require("ip-geolocation-api-javascript-sdk/Geolocation
 const PORT = process.env.PORT || 3000;
 
 const apiKey = process.env.IP_GEOLOCATION_API_KEY;
-const ipgeolocationApi = new IPGeolocationAPI(apiKey, true);
+const ipgeolocationApi = new IPGeolocationAPI(apiKey);
+
+function getGeolocationAsync(geolocationParams) {
+  return new Promise((resolve, reject) => {
+    ipgeolocationApi.getGeolocation((response) => {
+      if (response && !response.message) {
+        resolve(response);
+      } else {
+        reject(new Error(response ? response.message : "Unknown error"));
+      }
+    }, geolocationParams);
+  });
+}
+
+async function getGeolocation(ip) {
+  const geolocationParams = new GeolocationParams();
+  geolocationParams.setIPAddress(ip);
+  geolocationParams.setFields("country_name");
+
+  try {
+    const geolocation = await getGeolocationAsync(geolocationParams);
+    return geolocation;
+  } catch (error) {
+    console.error("Error fetching geolocation:", error);
+    throw error;
+  }
+}
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const openAI = new openai.OpenAI({
@@ -34,10 +60,8 @@ async function askGPT(promptText) {
 }
 
 async function generateHTMLPage(country_name) {
-  console.log(country_name);
   const p1 = `What is the most popular sport in ${country_name}. Answer in 1 word.`;
   const popular_sport = await askGPT(p1);
-  console.log(popular_sport);
 
   // A website to show the scores from the latest game in ${popular_sport}. Use popular team names and random scores and timelines. Display a neat scoreboard and timeline of events in the game. It should use ${COL_PICK} colours and be ${TONE_PICK}.
   const p2 = `
@@ -55,21 +79,16 @@ app.get("/", async function (req, res) {
   if (ip.includes(",")) {
     ip = ip.split(",")[0];
   }
+  // ip = "35.230.28.204";
+  // ip = "110.226.180.64";
 
-  console.log("-------------------");
-  console.log(ip);
-  console.log("-------------------");
+  const geolocation = await getGeolocation(ip);
 
-  const geolocationParams = new GeolocationParams();
-  geolocationParams.setIPAddress(ip);
+  const { country_name } = geolocation ?? { country_name: "India" };
 
-  const geolocation = await ipgeolocationApi.getGeolocation(geolocationParams);
+  const scores_page_html = await generateHTMLPage(country_name);
 
-  const { country_name = "USA" } = geolocation;
-
-  const responseHTML = await generateHTMLPage(country_name);
-
-  return res.setHeader("Content-type", "text/html").send(responseHTML);
+  return res.setHeader("Content-type", "text/html").send(scores_page_html);
 });
 
 app.listen(PORT, function () {
