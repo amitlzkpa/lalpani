@@ -7,7 +7,7 @@ const GeolocationParams = require("ip-geolocation-api-javascript-sdk/Geolocation
 const PORT = process.env.PORT || 3000;
 
 const apiKey = process.env.IP_GEOLOCATION_API_KEY;
-const ipgeolocationApi = new IPGeolocationAPI(apiKey);
+const ipgeolocationApi = new IPGeolocationAPI(apiKey, true);
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const openAI = new openai.OpenAI({
@@ -33,10 +33,20 @@ async function askGPT(promptText) {
   return completion.choices[0].message.content;
 }
 
-async function generateHTML(country_name) {
+async function generateHTMLPage(country_name) {
+  console.log(country_name);
   const p1 = `What is the most popular sport in ${country_name}. Answer in 1 word.`;
   const popular_sport = await askGPT(p1);
-  return popular_sport;
+  console.log(popular_sport);
+
+  // A website to show the scores from the latest game in ${popular_sport}. Use popular team names and random scores and timelines. Display a neat scoreboard and timeline of events in the game. It should use ${COL_PICK} colours and be ${TONE_PICK}.
+  const p2 = `
+    Create an HTML page based on following description and return only the HTML:
+    A website to show the scores from the latest game in ${popular_sport}. Use popular team names and random scores and timelines. Display a neat scoreboard and timeline of events in the game.
+  `;
+  const response_html = await askGPT(p2);
+
+  return response_html;
 }
 
 app.get("/", async function (req, res) {
@@ -53,24 +63,13 @@ app.get("/", async function (req, res) {
   const geolocationParams = new GeolocationParams();
   geolocationParams.setIPAddress(ip);
 
-  ipgeolocationApi.getGeolocation(async (geolocation) => {
-    const { country_name = "USA" } = geolocation;
+  const geolocation = await ipgeolocationApi.getGeolocation(geolocationParams);
 
-    console.log(country_name);
-    const popular_sport = await generateHTML(country_name);
-    console.log(popular_sport);
+  const { country_name = "USA" } = geolocation;
 
-    // A website to show the scores from the latest game in ${popular_sport}. Use popular team names and random scores and timelines. Display a neat scoreboard and timeline of events in the game. It should use ${COL_PICK} colours and be ${TONE_PICK}.
-    const p2 = `
-      Create an HTML page based on following description and return only the HTML:
+  const responseHTML = await generateHTMLPage(country_name);
 
-      A website to show the scores from the latest game in ${popular_sport}. Use popular team names and random scores and timelines. Display a neat scoreboard and timeline of events in the game.
-    `;
-
-    const responseHTML = await askGPT(p2);
-
-    return res.setHeader("Content-type", "text/html").send(responseHTML);
-  }, geolocationParams);
+  return res.setHeader("Content-type", "text/html").send(responseHTML);
 });
 
 app.listen(PORT, function () {
