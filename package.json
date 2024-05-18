@@ -10,6 +10,7 @@
   "author": "amitlzkpa",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.6.8",
     "dotenv": "^10.0.0",
     "express": "^4.19.2",
     "ip-geolocation-api-javascript-sdk": "^1.0.9",

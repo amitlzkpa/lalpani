@@ -1,17 +1,19 @@
 require("dotenv").config();
 const express = require("express");
-const IPGeolocationAPI = require("ip-geolocation-api-javascript-sdk");
-const GeolocationParams = require("ip-geolocation-api-javascript-sdk/GeolocationParams.js");
+const axios = require("axios");
+// const IPGeolocationAPI = require("ip-geolocation-api-javascript-sdk");
+// const GeolocationParams = require("ip-geolocation-api-javascript-sdk/GeolocationParams.js");
 
 const PORT = process.env.PORT || 3000;
 
-const apiKey = process.env.IP_GEOLOCATION_API_KEY;
-const ipgeolocationApi = new IPGeolocationAPI(apiKey);
+const apiKey = process.env.IP2_LOCATION_LITE_API_KEY;
+// const apiKey = process.env.IP_GEOLOCATION_API_KEY;
+// const ipgeolocationApi = new IPGeolocationAPI(apiKey);
 
 const app = express();
 app.set("trust proxy", true);
 
-app.get("/", function (req, res) {
+app.get("/", async function (req, res) {
   const ip =
     req.headers["x-forwarded-for"] || req.ip || req.socket.remoteAddress;
 
@@ -19,12 +21,18 @@ app.get("/", function (req, res) {
   console.log(ip);
   console.log("-------------------");
 
-  const geolocationParams = new GeolocationParams();
-  geolocationParams.setIPAddress(ip);
+  const response = await axios.get(
+    `https://lite.ip2location.com/?key=${apiKey}&ip=${ip}&format=json`
+  );
+  const country = response.data.country_name;
+  return res.json({ country });
 
-  ipgeolocationApi.getGeolocation((geolocation) => {
-    return res.json(geolocation);
-  }, geolocationParams);
+  // const geolocationParams = new GeolocationParams();
+  // geolocationParams.setIPAddress(ip);
+
+  // ipgeolocationApi.getGeolocation((geolocation) => {
+  //   return res.json(geolocation);
+  // }, geolocationParams);
 });
 
 app.listen(PORT, function () {
