@@ -1,4 +1,4 @@
-# starter-express
+# lalpani
 
 - express server
 - dotenv setup
