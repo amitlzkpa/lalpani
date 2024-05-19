@@ -35,9 +35,9 @@ async function getGeolocation(ip) {
   }
 }
 
-function getRandomItem(array) {
-  const randomIndex = Math.floor(Math.random() * array.length);
-  return array[randomIndex];
+function getRandomIdx(arrayLength) {
+  const randomIndex = Math.floor(Math.random() * arrayLength);
+  return randomIndex;
 }
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -64,16 +64,10 @@ async function askGPT(promptText) {
   return completion.choices[0].message.content;
 }
 
-async function generateHTMLPage(country_name) {
+async function generateHTMLPage(country_name, primary_color, design_theme) {
   const p1 = `What is the most popular sport in ${country_name}. Answer in 1 word.`;
   const popular_sport = await askGPT(p1);
 
-  const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
-  const themes = ["futuristic", "retro", "minimalist", "grunge", "neon"];
-
-  // A website to show the scores from the latest game in ${popular_sport}. Use popular team names and random scores and timelines. Display a neat scoreboard and timeline of events in the game.
-  const primary_color = getRandomItem(colors);
-  const design_theme = getRandomItem(themes);
   const p2 = `
     Create an HTML page based on following description and return only the HTML:
     A website to show the scores from the latest game in ${popular_sport}. Use real team names and random scores. Display a neat scoreboard and timeline of events in the game. It should use ${primary_color} as the primary colour and have a ${design_theme} theme for the design.
@@ -90,14 +84,30 @@ app.get("/", async function (req, res) {
   if (ip.includes(",")) {
     ip = ip.split(",")[0];
   }
-  // ip = "35.230.28.204";
+  ip = "35.230.28.204";
   // ip = "110.226.180.64";
 
   const geolocation = await getGeolocation(ip);
 
   const { country_name } = geolocation ?? { country_name: "India" };
 
-  const scores_page_html = await generateHTMLPage(country_name);
+  const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
+  const themes = ["futuristic", "retro", "minimalist", "grunge", "neon"];
+
+  const idx_1 = getRandomIdx(colors.length);
+  const idx_2 = getRandomIdx(themes.length);
+
+  const ridx_1 = Math.abs(parseInt(req.query.idx, 10)) % colors.length;
+  const ridx_2 = Math.abs(parseInt(req.query.idx, 10)) % themes.length;
+
+  const primary_color = colors[ridx_1 ?? idx_1];
+  const design_theme = themes[ridx_2 ?? idx_2];
+
+  const scores_page_html = await generateHTMLPage(
+    country_name,
+    primary_color,
+    design_theme
+  );
 
   return res.setHeader("Content-type", "text/html").send(scores_page_html);
 });
