@@ -78,13 +78,13 @@ async function generateHTMLPage(country_name, primary_color, design_theme) {
 }
 
 app.get("/", async function (req, res) {
-  // let ip = req.headers["x-forwarded-for"] || req.ip || req.socket.remoteAddress;
-  let ip = req.ip || req.socket.remoteAddress;
+  let ip = req.headers["x-forwarded-for"] || req.ip || req.socket.remoteAddress;
+  // let ip = req.ip || req.socket.remoteAddress;
 
   if (ip.includes(",")) {
     ip = ip.split(",")[0];
   }
-  ip = "35.230.28.204";
+  // ip = "35.230.28.204";
   // ip = "110.226.180.64";
 
   const geolocation = await getGeolocation(ip);
