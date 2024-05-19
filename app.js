@@ -1,13 +1,78 @@
-require("dotenv").config();
-const express = require("express");
-const openai = require("openai");
-const IPGeolocationAPI = require("ip-geolocation-api-javascript-sdk");
-const GeolocationParams = require("ip-geolocation-api-javascript-sdk/GeolocationParams.js");
+import "dotenv/config";
+import express from "express";
+import ip6 from "ip6";
+import openai from "openai";
+import IPGeolocationAPI from "ip-geolocation-api-javascript-sdk";
+import GeolocationParams from "ip-geolocation-api-javascript-sdk/GeolocationParams.js";
 
 const PORT = process.env.PORT || 3000;
 
 const apiKey = process.env.IP_GEOLOCATION_API_KEY;
 const ipgeolocationApi = new IPGeolocationAPI(apiKey);
+
+function isBogonIp(ip) {
+  const ipToNumber = (ip) => {
+    if (ip.includes(":")) {
+      // IPv6
+      return BigInt("0x" + ip6.normalize(ip).replace(/:/g, ""));
+    } else {
+      // IPv4
+      return ip
+        .split(".")
+        .reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0);
+    }
+  };
+
+  const bogonRangesIPv4 = [
+    { start: "0.0.0.0", end: "0.255.255.255" },
+    { start: "10.0.0.0", end: "10.255.255.255" },
+    { start: "100.64.0.0", end: "100.127.255.255" },
+    { start: "127.0.0.0", end: "127.255.255.255" },
+    { start: "169.254.0.0", end: "169.254.255.255" },
+    { start: "172.16.0.0", end: "172.31.255.255" },
+    { start: "192.0.0.0", end: "192.0.0.7" },
+    { start: "192.0.2.0", end: "192.0.2.255" },
+    { start: "192.88.99.0", end: "192.88.99.255" },
+    { start: "192.168.0.0", end: "192.168.255.255" },
+    { start: "198.18.0.0", end: "198.19.255.255" },
+    { start: "198.51.100.0", end: "198.51.100.255" },
+    { start: "203.0.113.0", end: "203.0.113.255" },
+    { start: "224.0.0.0", end: "239.255.255.255" },
+    { start: "240.0.0.0", end: "255.255.255.255" },
+  ];
+
+  const bogonRangesIPv6 = [
+    { start: "::", end: "::" },
+    { start: "::1", end: "::1" },
+    { start: "::ffff:0:0", end: "::ffff:ffff:ffff" },
+    { start: "64:ff9b::", end: "64:ff9b::ffff:ffff" },
+    { start: "100::", end: "100::ffff:ffff:ffff:ffff" },
+    { start: "2001:db8::", end: "2001:db8:ffff:ffff:ffff:ffff:ffff:ffff" },
+    { start: "fc00::", end: "fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" },
+    { start: "fe80::", end: "febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff" },
+    { start: "ff00::", end: "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" },
+  ];
+
+  const ipNum = ipToNumber(ip);
+
+  const checkBogonRanges = (ranges) => {
+    for (let range of ranges) {
+      const startNum = ipToNumber(range.start);
+      const endNum = ipToNumber(range.end);
+
+      if (ipNum >= startNum && ipNum <= endNum) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  if (ip.includes(":")) {
+    return checkBogonRanges(bogonRangesIPv6);
+  } else {
+    return checkBogonRanges(bogonRangesIPv4);
+  }
+}
 
 function getGeolocationAsync(geolocationParams) {
   return new Promise((resolve, reject) => {
@@ -86,6 +151,10 @@ app.get("/", async function (req, res) {
   }
   // ip = "35.230.28.204";
   // ip = "110.226.180.64";
+
+  if (isBogonIp(ip)) {
+    return res.send(`Unsupported IP address: ${ip}`);
+  }
 
   const geolocation = await getGeolocation(ip);
 
