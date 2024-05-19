@@ -135,7 +135,7 @@ async function generateHTMLPage(country_name, primary_color, design_theme) {
 
   const p2 = `
     Create an HTML page based on following description and return only the HTML:
-    A website to show the scores from the latest game in ${popular_sport}. Use real team/players names and make up mock scores. Display a scoreboard with hover interactions and timeline of events in the game. Use tailwind css. It should use ${primary_color} as the primary colour and have a ${design_theme} theme for the design. Add an SVG image of a trophy on the page header.
+    A website to show the scores from the latest game in ${popular_sport}. Use real team/players names and make up mock scores. Display a scoreboard with hover interactions and timeline of events in the game. Use tailwind css. It should use ${primary_color} as the primary colour and have a ${design_theme} theme for the design. Add an SVG image of a trophy on the page header. Add 3 different unsplash images at the bottom in a carousel.
   `;
   const response_html = await askGPT(p2);
 
