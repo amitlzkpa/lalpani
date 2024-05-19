@@ -35,6 +35,11 @@ async function getGeolocation(ip) {
   }
 }
 
+function getRandomItem(array) {
+  const randomIndex = Math.floor(Math.random() * array.length);
+  return array[randomIndex];
+}
+
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const openAI = new openai.OpenAI({
   apiKey: OPENAI_API_KEY,
@@ -63,10 +68,15 @@ async function generateHTMLPage(country_name) {
   const p1 = `What is the most popular sport in ${country_name}. Answer in 1 word.`;
   const popular_sport = await askGPT(p1);
 
-  // A website to show the scores from the latest game in ${popular_sport}. Use popular team names and random scores and timelines. Display a neat scoreboard and timeline of events in the game. It should use ${COL_PICK} colours and be ${TONE_PICK}.
+  const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
+  const themes = ["futuristic", "retro", "minimalist", "grunge", "neon"];
+
+  // A website to show the scores from the latest game in ${popular_sport}. Use popular team names and random scores and timelines. Display a neat scoreboard and timeline of events in the game.
+  const primary_color = getRandomItem(colors);
+  const design_theme = getRandomItem(themes);
   const p2 = `
     Create an HTML page based on following description and return only the HTML:
-    A website to show the scores from the latest game in ${popular_sport}. Use popular team names and random scores and timelines. Display a neat scoreboard and timeline of events in the game.
+    A website to show the scores from the latest game in ${popular_sport}. Use real team names and random scores. Display a neat scoreboard and timeline of events in the game. It should use ${primary_color} as the primary colour and have a ${design_theme} theme for the design.
   `;
   const response_html = await askGPT(p2);
 
@@ -74,7 +84,8 @@ async function generateHTMLPage(country_name) {
 }
 
 app.get("/", async function (req, res) {
-  let ip = req.headers["x-forwarded-for"] || req.ip || req.socket.remoteAddress;
+  // let ip = req.headers["x-forwarded-for"] || req.ip || req.socket.remoteAddress;
+  let ip = req.ip || req.socket.remoteAddress;
 
   if (ip.includes(",")) {
     ip = ip.split(",")[0];
